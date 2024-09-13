@@ -48,6 +48,11 @@ jobs:
         mkdir -p ./artifacts
         cp ports/rp2/build-${{ matrix.board }}/firmware.uf2 ./artifacts/PICO.uf2  # Mover el archivo UF2
 
+    # Agregar un paso para convertir ELF a UF2 si no se genera automáticamente
+    - name: Convert ELF to UF2
+      run: |
+        python3 ./lv_micropython/tools/uf2conv.py ./ports/rp2/build-${{ matrix.board }}/firmware.elf ./artifacts/PICO.uf2
+
     - name: Generate Tag
       id: tag
       run: echo "TAG_NAME=release-$(date +'%Y%m%d-%H%M')" >> $GITHUB_ENV
