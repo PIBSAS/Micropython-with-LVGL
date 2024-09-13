@@ -1,7 +1,8 @@
-name: rp2 port
+name: Build MicroPython for PICO
 
 permissions:
-  contents: write
+  contents: write  # Permitir escritura en el contenido del repositorio
+
 on:
   push:
     branches:
@@ -14,55 +15,42 @@ on:
 jobs:
   build:
     runs-on: ubuntu-20.04
-    strategy:
-      matrix:
-        board: [PICO]
     steps:
-    - uses: actions/checkout@v2
+    - name: Checkout Repository
+      uses: actions/checkout@v2
 
-    # Clona lv_micropython y los submódulos necesarios
     - name: Clone lv_micropython repository
       run: |
         git clone --recurse-submodules https://github.com/lvgl/lv_micropython.git
         cd lv_micropython
-        git submodule update --init --recursive
-
-    - name: arm-none-eabi-gcc
-      uses: carlosperate/arm-none-eabi-gcc-action@v1.3.0
-      with:
-        release: '9-2019-q4'
-
-    - name: Initialize lv_bindings submodule
-      run: cd lv_micropython && git submodule update --init --recursive lib/lv_bindings  
-
-    - name: Initialize Micropython submodules
-      run: cd lv_micropython && make -C ports/rp2 BOARD=${{ matrix.board }} USER_C_MODULES=../../lib/lv_bindings/bindings.cmake submodules
+        git submodule update --init --recursive lib/lv_bindings
 
     - name: Build mpy-cross
-      run: cd lv_micropython && make -j $(nproc) -C mpy-cross
-
-    - name: Build ${{ matrix.board }} and create UF2
       run: |
         cd lv_micropython
-        make -j $(nproc) -C ports/rp2 BOARD=${{ matrix.board }} USER_C_MODULES=../../lib/lv_bindings/bindings.cmake
-        mkdir -p ./artifacts
-        cp ports/rp2/build-${{ matrix.board }}/firmware.uf2 ./artifacts/PICO.uf2  # Mover el archivo UF2
+        make -C mpy-cross
 
-    # Agregar un paso para convertir ELF a UF2 si no se genera automáticamente
-    - name: Convert ELF to UF2
+    - name: Initialize Micropython submodules
       run: |
-        python3 ./lv_micropython/tools/uf2conv.py ./ports/rp2/build-${{ matrix.board }}/firmware.elf ./artifacts/PICO.uf2
+        cd lv_micropython
+        make -C ports/rp2 BOARD=PICO submodules
+
+    - name: Build PICO port
+      run: |
+        cd lv_micropython
+        make -j -C ports/rp2 BOARD=PICO USER_C_MODULES=../../lib/lv_bindings/bindings.cmake
+        mkdir -p ./artifacts
+        cp ports/rp2/build-PICO/firmware.uf2 ./artifacts/PICO.uf2  # Mover el archivo UF2
 
     - name: Generate Tag
       id: tag
       run: echo "TAG_NAME=release-$(date +'%Y%m%d-%H%M')" >> $GITHUB_ENV
-
+      
     - name: Create Release
-      id: create_release
       uses: marvinpinto/action-automatic-releases@latest
       with:
         repo_token: "${{ secrets.GITHUB_TOKEN }}"
         prerelease: false
         automatic_release_tag: ${{ env.TAG_NAME }} 
         title: "MicroPython + LVGL Display Driver Release for version ${{ env.TAG_NAME }}"
-        files: ./artifacts/*.uf2
+        files: ./artifacts/PICO.uf2  # Especificar correctamente el archivo UF2
