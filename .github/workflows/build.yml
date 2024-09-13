@@ -1,0 +1,77 @@
+name: rp2 port
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:  # Permite iniciar el flujo manualmente desde la interfaz de GitHub
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        board: [PICO]  # Agrega más placas si es necesario
+    steps:
+    - uses: actions/checkout@v2
+
+    # Clona lv_micropython y los submódulos necesarios
+    - name: Clone lv_micropython repository
+      run: |
+        git clone --recurse-submodules https://github.com/lvgl/lv_micropython.git
+        cd lv_micropython
+        git submodule update --init --recursive
+
+    - name: arm-none-eabi-gcc
+      uses: carlosperate/arm-none-eabi-gcc-action@v1.3.0
+      with:
+        release: '9-2019-q4'
+
+    - name: Initialize lv_bindings submodule
+      run: cd lv_micropython && git submodule update --init --recursive lib/lv_bindings  
+
+    - name: Initialize Micropython submodules
+      run: cd lv_micropython && make -C ports/rp2 BOARD=${{ matrix.board }} USER_C_MODULES=../../lib/lv_bindings/bindings.cmake submodules
+
+    - name: Build mpy-cross
+      run: cd lv_micropython && make -j $(nproc) -C mpy-cross
+
+    - name: Build ${{ matrix.board }}
+      run: cd lv_micropython && make -j $(nproc) -C ports/rp2 BOARD=${{ matrix.board }} USER_C_MODULES=../../lib/lv_bindings/bindings.cmake
+
+    - name: Upload firmware artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: ${{ matrix.board }}.elf
+        path: lv_micropython/ports/rp2/build-${{ matrix.board }}/firmware.elf
+
+  release:
+    needs: build
+    runs-on: ubuntu-20.04
+    steps:
+    - name: Download build artifacts
+      uses: actions/download-artifact@v2
+      with:
+        name: ${{ matrix.board }}.elf
+
+    - name: Create or Update Release
+      id: create_release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ github.ref }}  # Usa la referencia del push (como la rama main o un tag)
+        release_name: Release ${{ github.ref }}
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Upload Firmware to Release
+      uses: actions/upload-release-asset@v1
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: lv_micropython/ports/rp2/build-${{ matrix.board }}/firmware.elf
+        asset_name: firmware-${{ matrix.board }}.elf
+        asset_content_type: application/octet-stream
