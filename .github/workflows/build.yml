@@ -44,12 +44,21 @@ jobs:
         cd lv_micropython
         make -j $(nproc) -C ports/rp2 BOARD=${{ matrix.board }} USER_C_MODULES=../../lib/lv_bindings/bindings.cmake
         mkdir -p ./artifacts
-        cp ports/rp2/build-${{ matrix.board }}/firmware.uf2 ./artifacts/PICO.uf2  # Modificado para mover el archivo UF2
+        cp ports/rp2/build-${{ matrix.board }}/firmware.uf2 ./artifacts/PICO.uf2  # Mover el archivo UF2
+
+  release:
+    needs: build
+    runs-on: ubuntu-20.04
+    steps:
+    - name: Download build artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: PICO.uf2
 
     - name: Generate Tag
       id: tag
       run: echo "TAG_NAME=release-$(date +'%Y%m%d-%H%M')" >> $GITHUB_ENV
-      
+
     - name: Create Release
       uses: marvinpinto/action-automatic-releases@latest
       with:
@@ -57,4 +66,5 @@ jobs:
         prerelease: false
         automatic_release_tag: ${{ env.TAG_NAME }} 
         title: "MicroPython + ST7789 Display Driver Release for version ${{ env.TAG_NAME }}"
-        files: ./artifacts/*
+        files: ./artifacts/PICO.uf2  # Asegúrate de especificar el archivo correcto
+
