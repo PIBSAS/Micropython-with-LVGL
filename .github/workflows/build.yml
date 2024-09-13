@@ -45,7 +45,7 @@ jobs:
         cd lv_micropython
         make -j -C ports/rp2 BOARD=PICO USER_C_MODULES=../../lib/lv_bindings/bindings.cmake
         mkdir -p ./artifacts
-        cp ports/rp2/build-PICO/firmware.uf2 ./artifacts/PICO.uf2  # Mover el archivo UF2
+        cp ports/rp2/build-PICO/* ./artifacts/ # Mover el archivo UF2
 
     - name: Generate Tag
       id: tag
@@ -58,4 +58,4 @@ jobs:
         prerelease: false
         automatic_release_tag: ${{ env.TAG_NAME }} 
         title: "MicroPython + LVGL Display Driver Release for version ${{ env.TAG_NAME }}"
-        files: ./artifacts/PICO.uf2  # Especificar correctamente el archivo UF2
+        files: ./artifacts/  # Especificar correctamente el archivo UF2
