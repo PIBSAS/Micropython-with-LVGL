@@ -19,6 +19,11 @@ jobs:
     - name: Checkout Repository
       uses: actions/checkout@v2
 
+    - name: Install dependencies
+      run: |
+       sudo apt-get update
+       sudo apt-get install -y gcc-arm-none-eabi libssl-dev python3 python3-pip python3-venv build-essential libffi-dev git pkg-config
+       
     - name: Clone lv_micropython repository
       run: |
         git clone --recurse-submodules https://github.com/lvgl/lv_micropython.git
