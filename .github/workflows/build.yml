@@ -6,9 +6,9 @@ on:
     tags:
      - 'v*'
   schedule:
-     - cron: '0 0 * * 0'  # Se ejecutará a las 00:00 UTC cada domingo
+     - cron: '0 0 * * 0'
   
-  workflow_dispatch:  # Permite ejecutar manualmente el flujo de trabajo
+  workflow_dispatch:
 
 jobs:
   build:
@@ -20,10 +20,10 @@ jobs:
     - name: lv_micro
       run: git clone https://github.com/lvgl/lv_micropython.git
       
-    - name: arm-none-eabi-gcc
-      uses: carlosperate/arm-none-eabi-gcc-action@v1.3.0
-      with:
-        release: '9-2019-q4'
+    - name: arm-none-eabi-gcc GNU Arm Embedded Toolchain
+      uses: carlosperate/arm-none-eabi-gcc-action@v1.9.1
+      #with:
+       # release: '9-2019-q4'
     
     - name: Initialize lv_bindings submodule
       run: |
@@ -58,7 +58,7 @@ jobs:
         cd picotool
         mkdir build
         cd build
-        export PICO_SDK_PATH=../../pico-sdk  # Asegúrate de que esta ruta sea correcta
+        export PICO_SDK_PATH=../../pico-sdk
         cmake ..
         make
         cd ../..
@@ -69,7 +69,7 @@ jobs:
 
     - name: Get MicroPython Version from mpconfig.h
       run: |
-        cd micropython/
+        cd lv_micropython/
         MAJOR=$(grep -oP '(?<=#define MICROPY_VERSION_MAJOR )[0-9]+' py/mpconfig.h)
         MINOR=$(grep -oP '(?<=#define MICROPY_VERSION_MINOR )[0-9]+' py/mpconfig.h)
         MICRO=$(grep -oP '(?<=#define MICROPY_VERSION_MICRO )[0-9]+' py/mpconfig.h)
@@ -98,13 +98,3 @@ jobs:
         files: lv_micropython/ports/rp2/build-${{ matrix.board }}/firmware.uf2
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        
-   # - name: Create Release
-    #  uses: marvinpinto/action-automatic-releases@latest
-     # with:
-      #  repo_token: "${{ secrets.GITHUB_TOKEN }}"
-       # prerelease: false
-        #automatic_release_tag: ${{ env.TAG_NAME }}
-        #title: "MicroPython with LVGL for RP2 Release version ${{ env.MPY_VERSION }} (Build ${{ env.TAG_NAME }})"
-        #files: lv_micropython/ports/rp2/build-${{ matrix.board }}/firmware.uf2
-    
