@@ -22,8 +22,6 @@ jobs:
       
     - name: arm-none-eabi-gcc GNU Arm Embedded Toolchain
       uses: carlosperate/arm-none-eabi-gcc-action@v1.9.1
-      #with:
-       # release: '9-2019-q4'
     
     - name: Initialize lv_bindings submodule
       run: |
