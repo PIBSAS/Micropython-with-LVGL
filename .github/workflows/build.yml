@@ -36,7 +36,7 @@ jobs:
     - name: Build ${{ matrix.board }}
       run: |
         cd lv_micropython
-        make -j $(nproc) -C ports/rp2 BOARD=${{ matrix.board }} USER_C_MODULES=../../user_modules/lv_binding_micropython/micropython.cmake
+        make -j $(nproc) -C ports/rp2 BOARD=${{ matrix.board }} USER_C_MODULES=../../lv_binding_micropython/micropython.cmake
 
     - name: Clonar el SDK de Raspberry Pi Pico
       run: |
