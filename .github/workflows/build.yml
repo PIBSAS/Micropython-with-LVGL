@@ -75,7 +75,7 @@ jobs:
 
     - name: Convertir .elf a .uf2
       run: |
-        ./picotool/build/picotool uf2 convert ${GITHUB_WORKSPACE}/Micropython-with-LVGL/ports/rp2/build-${{ matrix.board }}/firmware.elf ${GITHUB_WORKSPACE}/Micropython-with-LVGL/ports/rp2/build-${{ matrix.board }}/firmware.uf2
+        ./picotool/build/picotool uf2 convert ${GITHUB_WORKSPACE}/ports/rp2/build-${{ matrix.board }}/firmware.elf ${GITHUB_WORKSPACE}/ports/rp2/build-${{ matrix.board }}/firmware.uf2
       #./picotool/build/picotool uf2 convert ${GITHUB_WORKSPACE}/lv_micropython/ports/rp2/build-${{ matrix.board }}/firmware.elf ${GITHUB_WORKSPACE}/lv_micropython/ports/rp2/build-${{ matrix.board }}/firmware.uf2
 
     - name: Get MicroPython Version from mpconfig.h
