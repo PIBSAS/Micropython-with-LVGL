@@ -38,7 +38,7 @@ jobs:
     - name: Build mpy-cross
       run: make -j $(nproc) -C mpy-cross
     - name: Build the rp2 port
-      run: make -j $(nproc) -C ports/rp2 DEBUG=1 USER_C_MODULES=../../user_modules/lv_binding_micropython/micropython.cmake DEBUG=1
+      run: make -j $(nproc) -C ports/rp2 DEBUG=1 USER_C_MODULES=../../lv_binding_micropython/micropython.cmake
       
     - name: Clonar el SDK de Raspberry Pi Pico
       run: |
