@@ -38,23 +38,8 @@ jobs:
     - name: Build mpy-cross
       run: make -j $(nproc) -C mpy-cross
     - name: Build the rp2 port
-      run: make -j $(nproc) -C ports/rp2 DEBUG=1
+      run: make -j $(nproc) -C ports/rp2 DEBUG=1 USER_C_MODULES=../../user_modules/lv_binding_micropython/micropython.cmake DEBUG=1
       
-  #  - name: Initialize Micropython submodules
-   #   run: |
-    #    cd lv_micropython
-     #   git submodule update --init --recursive
-    
-    #- name: Build mpy-cross
-    #  run: |
-    #    cd lv_micropython
-    #    make -j $(nproc) -C mpy-cross
-    
-    #- name: Build ${{ matrix.board }}
-    #  run: |
-    #    cd lv_micropython
-    #    make -j $(nproc) -C ports/rp2 BOARD=${{ matrix.board }} USER_C_MODULES=../../lv_binding_micropython/micropython.cmake
-
     - name: Clonar el SDK de Raspberry Pi Pico
       run: |
         git clone https://github.com/raspberrypi/pico-sdk.git
@@ -76,7 +61,6 @@ jobs:
     - name: Convertir .elf a .uf2
       run: |
         ./picotool/build/picotool uf2 convert ${GITHUB_WORKSPACE}/ports/rp2/build-${{ matrix.board }}/firmware.elf ${GITHUB_WORKSPACE}/ports/rp2/build-${{ matrix.board }}/firmware.uf2
-      #./picotool/build/picotool uf2 convert ${GITHUB_WORKSPACE}/lv_micropython/ports/rp2/build-${{ matrix.board }}/firmware.elf ${GITHUB_WORKSPACE}/lv_micropython/ports/rp2/build-${{ matrix.board }}/firmware.uf2
 
     - name: Get MicroPython Version from mpconfig.h
       run: |
