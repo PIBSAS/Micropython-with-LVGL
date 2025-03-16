@@ -53,7 +53,7 @@ jobs:
     - name: Build the rp2 port
       run: |
         cd lv_micropython
-        USER_C_MODULES=${GITHUB_WORKSPACE}/user_modules/lv_binding_micropython/micropython.cmake
+        USER_C_MODULES="${GITHUB_WORKSPACE}/lv_micropython/user_modules/lv_binding_micropython/micropython.cmake"
         echo "Using USER_C_MODULES: ${USER_C_MODULES}"
         make -j $(nproc) -C ports/rp2 DEBUG=1 USER_C_MODULES=${USER_C_MODULES}
       
