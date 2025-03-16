@@ -40,20 +40,20 @@ jobs:
     - name: Build the rp2 port
       run: make -j $(nproc) -C ports/rp2 DEBUG=1
       
-    - name: Initialize Micropython submodules
-      run: |
-        cd lv_micropython
-        git submodule update --init --recursive
+  #  - name: Initialize Micropython submodules
+   #   run: |
+    #    cd lv_micropython
+     #   git submodule update --init --recursive
     
-    - name: Build mpy-cross
-      run: |
-        cd lv_micropython
-        make -j $(nproc) -C mpy-cross
+    #- name: Build mpy-cross
+    #  run: |
+    #    cd lv_micropython
+    #    make -j $(nproc) -C mpy-cross
     
-    - name: Build ${{ matrix.board }}
-      run: |
-        cd lv_micropython
-        make -j $(nproc) -C ports/rp2 BOARD=${{ matrix.board }} USER_C_MODULES=../../lv_binding_micropython/micropython.cmake
+    #- name: Build ${{ matrix.board }}
+    #  run: |
+    #    cd lv_micropython
+    #    make -j $(nproc) -C ports/rp2 BOARD=${{ matrix.board }} USER_C_MODULES=../../lv_binding_micropython/micropython.cmake
 
     - name: Clonar el SDK de Raspberry Pi Pico
       run: |
