@@ -17,11 +17,28 @@ jobs:
       matrix:
         board: [RPI_PICO]
     steps:
-    - name: lv_micro
-      run: git clone https://github.com/lvgl/lv_micropython.git
-      
     - name: arm-none-eabi-gcc GNU Arm Embedded Toolchain
       uses: carlosperate/arm-none-eabi-gcc-action@v1.9.1
+      
+    - name: lv_micro
+      run: |
+        git clone https://github.com/lvgl/lv_micropython.git .
+        git checkout master
+    - name: Initialize lv_bindings submodule
+      run: git submodule update --init --recursive user_modules/lv_binding_micropython
+    - name: Update RP2 port submodules
+      run: make -C ports/rp2 DEBUG=1 submodules  
+    - name: Checkout lv_bindings
+      working-directory: ./user_modules/lv_binding_micropython
+      run: |
+        git fetch --force ${{ github.event.repository.html_url }} "+refs/heads/*:refs/remotes/origin/*"
+        git fetch --force ${{ github.event.repository.html_url }} "+refs/pull/*:refs/remotes/origin/pr/*"
+        git checkout ${{ github.sha }} || git checkout ${{ github.event.pull_request.head.sha }}
+        git submodule update --init --recursive
+    - name: Build mpy-cross
+      run: make -j $(nproc) -C mpy-cross
+    - name: Build the rp2 port
+      run: make -j $(nproc) -C ports/rp2 DEBUG=1
       
     - name: Initialize Micropython submodules
       run: |
