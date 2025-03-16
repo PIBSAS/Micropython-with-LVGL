@@ -40,7 +40,7 @@ jobs:
          cd lv_micropython
          make -C ports/rp2 DEBUG=1 submodules  
     - name: Checkout lv_bindings
-      working-directory: ./user_modules/lv_binding_micropython
+      working-directory: ./lv_micropython/user_modules/lv_binding_micropython
       run: |
         git fetch --force ${{ github.event.repository.html_url }} "+refs/heads/*:refs/remotes/origin/*"
         git fetch --force ${{ github.event.repository.html_url }} "+refs/pull/*:refs/remotes/origin/pr/*"
