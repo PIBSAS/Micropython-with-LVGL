@@ -23,15 +23,15 @@ jobs:
     - name: arm-none-eabi-gcc GNU Arm Embedded Toolchain
       uses: carlosperate/arm-none-eabi-gcc-action@v1.9.1
     
-    - name: Initialize lv_bindings submodule
-      run: |
-        cd lv_micropython
-        git submodule update --init --recursive lib/lv_bindings
+  #  - name: Initialize lv_bindings submodule
+   #   run: |
+    #    cd lv_micropython
+     #   git submodule update --init --recursive lib/lv_bindings
       
     - name: Initialize Micropython submodules
       run: |
         cd lv_micropython
-        make -C ports/rp2 BOARD=${{ matrix.board }} USER_C_MODULES=../../lib/lv_bindings/bindings.cmake submodules
+        make -C ports/rp2 BOARD=${{ matrix.board }} USER_C_MODULES=../../lib/lvgl USER_C_MODULES+=../../lib/lvgl/lv_conf.h submodules
     
     - name: Build mpy-cross
       run: |
@@ -41,7 +41,7 @@ jobs:
     - name: Build ${{ matrix.board }}
       run: |
         cd lv_micropython
-        make -j $(nproc) -C ports/rp2 BOARD=${{ matrix.board }} USER_C_MODULES=../../lib/lv_bindings/bindings.cmake
+        make -j $(nproc) -C ports/rp2 BOARD=${{ matrix.board }} USER_C_MODULES=../../lib/lvgl USER_C_MODULES+=../../lib/lvgl/lv_conf.h
 
     - name: Clonar el SDK de Raspberry Pi Pico
       run: |
