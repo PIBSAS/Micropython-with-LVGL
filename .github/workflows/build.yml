@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        board: [PICO]
+        board: [RPI_PICO]
     steps:
     - name: lv_micro
       run: git clone https://github.com/lvgl/lv_micropython.git
