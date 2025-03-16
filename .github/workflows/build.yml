@@ -109,6 +109,6 @@ jobs:
           5. The RP2040 will reboot and run MicroPython.
         draft: false
         prerelease: false
-        files: lv_micropython/ports/rp2/build-${{ matrix.board }}/firmware.uf2
+        files: ports/rp2/build-${{ matrix.board }}/firmware.uf2
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
