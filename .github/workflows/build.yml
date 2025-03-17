@@ -37,7 +37,7 @@ jobs:
         cd picotool
         mkdir build
         cd build
-        export PICO_SDK_PATH=${GITHUB_WORKSPACE}${GITHUB_WORKSPACE}/pico-sdk
+        export PICO_SDK_PATH=${GITHUB_WORKSPACE}/pico-sdk
         cmake ..
         make -j$(nproc)
         cd ../..
