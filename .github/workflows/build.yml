@@ -39,7 +39,7 @@ jobs:
         mkdir build
         cd build
         export PICO_SDK_PATH=${GITHUB_WORKSPACE}/pico-sdk
-        cmake ..
+        cmake -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/picotool/build ..
         make -j$(nproc)
         cd ../..
 
