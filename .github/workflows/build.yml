@@ -25,7 +25,29 @@ jobs:
     - name: install GNU Arm Embedded Toolchain
       uses: carlosperate/arm-none-eabi-gcc-action@v1.9.1
 
-    - name: lv_micro
+    - name: Clone Pico SDK
+      run: |
+        git clone https://github.com/raspberrypi/pico-sdk.git
+        cd pico-sdk
+        git submodule update --init lib/mbedtls
+        cd ..
+
+    - name: Clone and Build picotool
+      run: |
+        git clone https://github.com/raspberrypi/picotool.git
+        cd picotool
+        mkdir build
+        cd build
+        export PICO_SDK_PATH=${GITHUB_WORKSPACE}/pico-sdk
+        cmake ..
+        make -j$(nproc)
+        cd ../..
+
+    - name: Set PICOTOOL path
+      run: |
+        echo "PICOTOOL_FETCH_FROM_GIT_PATH=${GITHUB_WORKSPACE}/picotool/build" >> $GITHUB_ENV
+        
+    - name: lv_micropython
       run: |
         git clone https://github.com/lvgl/lv_micropython.git
         cd ${GITHUB_WORKSPACE}/lv_micropython/
@@ -50,23 +72,7 @@ jobs:
         echo "Using USER_C_MODULES: ${USER_C_MODULES}"
         make -j $(nproc) -C ports/rp2 BOARD=${{ matrix.board }} USER_C_MODULES=${USER_C_MODULES} VERBOSE=1
 
-    - name: Clone Pico SDK
-      run: |
-        git clone https://github.com/raspberrypi/pico-sdk.git
-        cd pico-sdk
-        git submodule update --init lib/mbedtls
-        cd ..
-
-    - name: Clone and Build picotool
-      run: |
-        git clone https://github.com/raspberrypi/picotool.git
-        cd picotool
-        mkdir build
-        cd build
-        export PICO_SDK_PATH=${GITHUB_WORKSPACE}/pico-sdk
-        cmake ..
-        make -j$(nproc)
-        cd ../..
+    
     
     - name: Convert .elf to .uf2
       run: |
