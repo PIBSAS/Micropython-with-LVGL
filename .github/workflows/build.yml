@@ -17,10 +17,30 @@ jobs:
         board: [RPI_PICO]
     steps:
     - name: Install dependencies
-      run: sudo apt update && sudo apt install -y cmake make gcc-arm-none-eabi libnewlib-arm-none-eabi
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gcc-arm-none-eabi libssl-dev python3 python3-pip python3-venv build-essential libffi-dev git pkg-config cmake   
     
     - name: install GNU Arm Embedded Toolchain
       uses: carlosperate/arm-none-eabi-gcc-action@v1.9.1
+
+    - name: Clone Pico SDK
+      run: |
+        git clone https://github.com/raspberrypi/pico-sdk.git
+        cd pico-sdk
+        git submodule update --init lib/mbedtls
+        cd ..
+
+    - name: Clone and Build picotool
+      run: |
+        git clone https://github.com/raspberrypi/picotool.git
+        cd picotool
+        mkdir build
+        cd build
+        export PICO_SDK_PATH=${GITHUB_WORKSPACE}${GITHUB_WORKSPACE}/pico-sdk
+        cmake ..
+        make -j$(nproc)
+        cd ../..
       
     - name: lv_micro
       run: |
@@ -48,24 +68,6 @@ jobs:
         echo "Using USER_C_MODULES: ${USER_C_MODULES}"
         make -j $(nproc) -C ports/rp2 BOARD=${{ matrix.board }} USER_C_MODULES=${USER_C_MODULES}
       
-    - name: Clone Pico SDK
-      run: |
-        git clone https://github.com/raspberrypi/pico-sdk.git
-        cd pico-sdk
-        git submodule update --init lib/mbedtls
-        cd ..
-
-    - name: Clone and Build picotool
-      run: |
-        git clone https://github.com/raspberrypi/picotool.git
-        cd picotool
-        mkdir build
-        cd build
-        export PICO_SDK_PATH=${GITHUB_WORKSPACE}${GITHUB_WORKSPACE}/pico-sdk
-        cmake ..
-        make -j$(nproc)
-        cd ../..
-
     - name: Convert .elf to .uf2
       run: |
         run: |
