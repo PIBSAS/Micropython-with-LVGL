@@ -19,7 +19,8 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y libssl-dev python3 python3-pip python3-venv build-essential libffi-dev git pkg-config cmake libreadline-dev libsdl2-2.0-0 libsdl2-dev parallel  
+        sudo apt-get install -y libssl-dev python3 python3-pip python3-venv build-essential libffi-dev git pkg-config libreadline-dev libsdl2-2.0-0 libsdl2-dev parallel  
+        sudo snap install cmake --classic
     
     - name: install GNU Arm Embedded Toolchain
       uses: carlosperate/arm-none-eabi-gcc-action@v1.9.1
@@ -36,7 +37,6 @@ jobs:
         git submodule update --init --recursive
         git submodule update --init --recursive user_modules/lv_binding_micropython
         make -C ports/rp2 BOARD=${{ matrix.board }} submodules
-        ls -R
     
     - name: Build mpy-cross
       run: |
