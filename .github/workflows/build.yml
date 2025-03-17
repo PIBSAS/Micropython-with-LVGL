@@ -7,7 +7,6 @@ on:
      - 'v*'
   schedule:
      - cron: '0 0 * * 0'
-  
   workflow_dispatch:
 
 jobs:
@@ -17,72 +16,66 @@ jobs:
       matrix:
         board: [RPI_PICO]
     steps:
-    - name: arm-none-eabi-gcc GNU Arm Embedded Toolchain
+    - name: Install dependencies
+      run: sudo apt update && sudo apt install -y cmake make gcc-arm-none-eabi libnewlib-arm-none-eabi
+    
+    - name: install GNU Arm Embedded Toolchain
       uses: carlosperate/arm-none-eabi-gcc-action@v1.9.1
       
     - name: lv_micro
       run: |
         git clone https://github.com/lvgl/lv_micropython.git
-        cd lv_micropython
+        cd ${GITHUB_WORKSPACE}/lv_micropython/
         git checkout master
-    - name: Initialize lv_bindings submodule
+    
+    - name: Initialize submodules
       run: |
-        cd lv_micropython
+        cd ${GITHUB_WORKSPACE}/lv_micropython/
+        git submodule update --init --recursive
         git submodule update --init --recursive user_modules/lv_binding_micropython
+        make -C ports/rp2 BOARD=${{ matrix.board }} submodules
         ls -R
-    - name: Initialize and update lv_binding_micropython submodule
-      run: |
-        cd lv_micropython
-        git submodule update --init --recursive
-        cd user_modules/lv_binding_micropython
-        git submodule update --init --recursive
-    - name: Update RP2 port submodules
-      run: |
-         cd lv_micropython
-         make -C ports/rp2 DEBUG=1 submodules  
-    - name: Checkout lv_bindings
-      working-directory: ./lv_micropython/user_modules/lv_binding_micropython
-      run: |
-        git fetch --force ${{ github.event.repository.html_url }} "+refs/heads/*:refs/remotes/origin/*"
-        git fetch --force ${{ github.event.repository.html_url }} "+refs/pull/*:refs/remotes/origin/pr/*"
-        git checkout ${{ github.sha }} || git checkout ${{ github.event.pull_request.head.sha }}
-        git submodule update --init --recursive
-        ls -R 
+    
     - name: Build mpy-cross
       run: |
-        cd lv_micropython
+        cd ${GITHUB_WORKSPACE}/lv_micropython/
         make -j $(nproc) -C mpy-cross
-    - name: Build the rp2 port
-      run: |
-        cd lv_micropython
-        USER_C_MODULES="${GITHUB_WORKSPACE}/lv_micropython/user_modules/lv_binding_micropython/micropython.cmake"
-        echo "Using USER_C_MODULES: ${USER_C_MODULES}"
-        make -j $(nproc) -C ports/rp2 DEBUG=1 USER_C_MODULES=${USER_C_MODULES}
       
-    - name: Clonar el SDK de Raspberry Pi Pico
+    - name: Build the rp2 port with LVGL
+      run: |
+        cd ${GITHUB_WORKSPACE}/lv_micropython/
+        USER_C_MODULES="${GITHUB_WORKSPACE}/lv_micropython/user_modules/lv_binding_micropython/bindings.cmake"
+        echo "Using USER_C_MODULES: ${USER_C_MODULES}"
+        make -j $(nproc) -C ports/rp2 BOARD=${{ matrix.board }} USER_C_MODULES=${USER_C_MODULES}
+      
+    - name: Clone Pico SDK
       run: |
         git clone https://github.com/raspberrypi/pico-sdk.git
         cd pico-sdk
         git submodule update --init lib/mbedtls
         cd ..
 
-    - name: Clonar picotool
+    - name: Clone and Build picotool
       run: |
         git clone https://github.com/raspberrypi/picotool.git
         cd picotool
         mkdir build
         cd build
-        export PICO_SDK_PATH=../../pico-sdk
+        export PICO_SDK_PATH=${GITHUB_WORKSPACE}${GITHUB_WORKSPACE}/pico-sdk
         cmake ..
-        make
+        make -j$(nproc)
         cd ../..
 
-    - name: Convertir .elf a .uf2
+    - name: Convert .elf to .uf2
       run: |
-        ./picotool/build/picotool uf2 convert ${GITHUB_WORKSPACE}/ports/rp2/build-${{ matrix.board }}/firmware.elf ${GITHUB_WORKSPACE}/ports/rp2/build-${{ matrix.board }}/firmware.uf2
+        run: |
+        ${GITHUB_WORKSPACE}/picotool/build/picotool uf2 convert \
+        ${GITHUB_WORKSPACE}/lv_micropython/ports/rp2/build-${{ matrix.board }}/firmware.elf \
+        ${GITHUB_WORKSPACE}/lv_micropython/ports/rp2/build-${{ matrix.board }}/firmware.uf2
 
     - name: Get MicroPython Version from mpconfig.h
       run: |
+        cd ${GITHUB_WORKSPACE}/lv_micropython/
         MAJOR=$(grep -oP '(?<=#define MICROPY_VERSION_MAJOR )[0-9]+' py/mpconfig.h)
         MINOR=$(grep -oP '(?<=#define MICROPY_VERSION_MINOR )[0-9]+' py/mpconfig.h)
         MICRO=$(grep -oP '(?<=#define MICROPY_VERSION_MICRO )[0-9]+' py/mpconfig.h)
