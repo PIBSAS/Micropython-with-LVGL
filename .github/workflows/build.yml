@@ -11,16 +11,18 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         board: [RPI_PICO]
     steps:
-    - name: Install dependencies
+    - name: Instalar dependencias
       run: |
         sudo apt-get update
-        sudo apt-get install -y libssl-dev python3 python3-pip python3-venv build-essential libffi-dev git pkg-config libreadline-dev libsdl2-2.0-0 libsdl2-dev parallel  
-        sudo snap install cmake --classic
+        sudo apt-get install -y build-essential libffi-dev git pkg-config libssl-dev python3 python3-pip python3-venv doxygen gcc-arm-none-eabi parallel libreadline-dev libsdl2-2.0-0 libsdl2-dev
+      
+    - name: Install pycparser
+      run: pip install pycparser
     
     - name: install GNU Arm Embedded Toolchain
       uses: carlosperate/arm-none-eabi-gcc-action@v1.9.1
@@ -47,32 +49,30 @@ jobs:
       run: |
         echo "PICOTOOL_FETCH_FROM_GIT_PATH=${GITHUB_WORKSPACE}/picotool/build" >> $GITHUB_ENV
         
-    - name: lv_micropython
+    - name: Clonar lv_micropython (Fork de MicroPython con LVGL)
       run: |
-        git clone https://github.com/lvgl/lv_micropython.git
-        cd ${GITHUB_WORKSPACE}/lv_micropython/
-        git checkout master
-    
-    - name: Initialize submodules
-      run: |
-        cd ${GITHUB_WORKSPACE}/lv_micropython/
-        git submodule update --init --recursive
+        git clone --recurse-submodules https://github.com/lvgl/lv_micropython.git micropython
+        cd micropython
         git submodule update --init --recursive user_modules/lv_binding_micropython
-        make -C ports/rp2 BOARD=${{ matrix.board }} submodules
+        echo "$GITHUB_WORKSPACE"
     
-    - name: Build mpy-cross
+    - name: Build MicroPython para ${{ matrix.board }}
       run: |
-        cd ${GITHUB_WORKSPACE}/lv_micropython/
-        make -j $(nproc) -C mpy-cross
-      
-    - name: Build the rp2 port with LVGL
-      run: |
-        cd ${GITHUB_WORKSPACE}/lv_micropython/
-        USER_C_MODULES="${GITHUB_WORKSPACE}/lv_micropython/user_modules/lv_binding_micropython/bindings.cmake"
-        echo "Using USER_C_MODULES: ${USER_C_MODULES}"
-        make -j $(nproc) -C ports/rp2 BOARD=${{ matrix.board }} USER_C_MODULES=${USER_C_MODULES} VERBOSE=1
-
+        cd micropython
+        make -C mpy-cross
+        cd ports/rp2
+        make submodules
+        make clean
+        make USER_C_MODULES=$GITHUB_WORKSPACE/micropython/user_modules/lv_binding_micropython/bindings.cmake
     
+    - name: Build MicroPython para ${{ matrix.board }}
+      run: |
+        cd micropython
+        make -C mpy-cross
+        cd ports/rp2
+        make BOARD=RPI_PICO submodules
+        make BOARD=RPI_PICO clean
+        make BOARD=RPI_PICO USER_C_MODULES=$GITHUB_WORKSPACE/micropython/user_modules/lv_binding_micropython/bindings.cmake
     
     - name: Convert .elf to .uf2
       run: |
@@ -81,9 +81,13 @@ jobs:
         ${GITHUB_WORKSPACE}/lv_micropython/ports/rp2/build-${{ matrix.board }}/firmware.elf \
         ${GITHUB_WORKSPACE}/lv_micropython/ports/rp2/build-${{ matrix.board }}/firmware.uf2
 
+    - name: List build directory contents (Check for firmware.uf2)
+      run: |
+        ls -lh ${GITHUB_WORKSPACE}/micropython/ports/rp2/build-${{ matrix.board }}
+
     - name: Get MicroPython Version from mpconfig.h
       run: |
-        cd ${GITHUB_WORKSPACE}/lv_micropython/
+        cd ${GITHUB_WORKSPACE}/micropython/
         MAJOR=$(grep -oP '(?<=#define MICROPY_VERSION_MAJOR )[0-9]+' py/mpconfig.h)
         MINOR=$(grep -oP '(?<=#define MICROPY_VERSION_MINOR )[0-9]+' py/mpconfig.h)
         MICRO=$(grep -oP '(?<=#define MICROPY_VERSION_MICRO )[0-9]+' py/mpconfig.h)
@@ -113,6 +117,6 @@ jobs:
           5. The RP2040 will reboot and run MicroPython.
         draft: false
         prerelease: false
-        files: ports/rp2/build-${{ matrix.board }}/firmware.uf2
+        files: micropython/ports/rp2/build-${{ matrix.board }}/firmware.uf2
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
